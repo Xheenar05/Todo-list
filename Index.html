@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Powered Todo Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen text-slate-100 p-4 sm:p-8">
+
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50 backdrop-blur">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent flex items-center gap-2">
+          <i class="fa-solid fa-robot text-indigo-400"></i> AI Task Studio
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Smart task management with embedded AI logic</p>
+      </div>
+      <div class="flex items-center gap-3 text-xs bg-indigo-950/80 border border-indigo-500/30 px-3 py-2 rounded-xl text-indigo-300">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        AI Agent Active
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Task Creation & List Column -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Input Form -->
+        <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-plus-circle text-indigo-400"></i> Add Task
+            </h2>
+            <span class="text-xs text-slate-400">Auto-detects #high or #low</span>
+          </div>
+
+          <form id="todo-form" class="space-y-3">
+            <div class="relative">
+              <input type="text" id="task-input" required 
+                placeholder="e.g., 'Deploy website to GitHub #high'" 
+                class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 pl-11 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+              <i class="fa-solid fa-wand-magic-sparkles absolute left-4 top-3.5 text-slate-500"></i>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <select id="priority-select" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                <option value="low">Priority: Low</option>
+                <option value="medium" selected>Priority: Medium</option>
+                <option value="high">Priority: High</option>
+              </select>
+
+              <select id="category-select" class="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                <option value="Work">Category: Work</option>
+                <option value="Personal">Category: Personal</option>
+                <option value="Code">Category: Code</option>
+                <option value="Learning">Category: Learning</option>
+              </select>
+
+              <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-plus"></i> Add Task
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Task List Header & Container -->
+        <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/60 pb-4">
+            <h2 class="text-lg font-semibold text-slate-200">Your Tasks</h2>
+            <div class="flex items-center gap-2">
+              <button onclick="filterTasks('all')" id="btn-all" class="filter-btn text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 text-white">All</button>
+              <button onclick="filterTasks('active')" id="btn-active" class="filter-btn text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Active</button>
+              <button onclick="filterTasks('completed')" id="btn-completed" class="filter-btn text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Completed</button>
+            </div>
+          </div>
+
+          <ul id="task-list" class="space-y-3"></ul>
+          
+          <div id="empty-state" class="hidden text-center py-8 text-slate-500">
+            <i class="fa-solid fa-clipboard-check text-4xl mb-2 text-slate-600"></i>
+            <p>No tasks found. Add a task above to get started!</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AI Assistant Column -->
+      <div class="space-y-6">
+        
+        <!-- Goal Deconstructor -->
+        <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-brain text-purple-400"></i> AI Goal Breakdown
+          </h2>
+          <p class="text-xs text-slate-400">Enter a big goal and let the AI break it into actionable steps.</p>
+          
+          <div class="space-y-3">
+            <input type="text" id="ai-goal-input" placeholder="e.g. Build web app" 
+              class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500">
+            <button onclick="generateSubtasks()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-xl text-sm transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-sitemap"></i> Deconstruct Goal
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-emerald-400"></i> AI Productivity Insights
+          </h2>
+          
+          <div class="bg-slate-900/80 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-300 space-y-2">
+            <div class="flex items-center gap-2 font-semibold text-emerald-400">
+              <i class="fa-solid fa-lightbulb"></i> Workload Analysis
+            </div>
+            <p id="ai-insight-text">Loading insights...</p>
+          </div>
+
+          <div class="pt-2 border-t border-slate-700/60 flex justify-between text-xs text-slate-400">
+            <span>Total Tasks: <strong id="stat-total" class="text-slate-200">0</strong></span>
+            <span>Completed: <strong id="stat-completed" class="text-emerald-400">0</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('ai_todo_tasks')) || [];
+    let currentFilter = 'all';
+
+    const taskForm = document.getElementById('todo-form');
+    const taskInput = document.getElementById('task-input');
+    const prioritySelect = document.getElementById('priority-select');
+    const categorySelect = document.getElementById('category-select');
+    const taskList = document.getElementById('task-list');
+    const emptyState = document.getElementById('empty-state');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTasks();
+      updateAIInsights();
+    });
+
+    taskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rawText = taskInput.value.trim();
+      if (!rawText) return;
+
+      let priority = prioritySelect.value;
+      let text = rawText;
+
+      if (rawText.toLowerCase().includes('#high')) {
+        priority = 'high';
+        text = text.replace(/#high/gi, '');
+      } else if (rawText.toLowerCase().includes('#low')) {
+        priority = 'low';
+        text = text.replace(/#low/gi, '');
+      }
+
+      tasks.unshift({
+        id: Date.now().toString(),
+        text: text.trim(),
+        priority: priority,
+        category: categorySelect.value,
+        completed: false,
+        createdAt: new Date().toISOString()
+      });
+
+      saveAndRender();
+      taskInput.value = '';
+    });
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      
+      const filtered = tasks.filter(task => {
+        if (currentFilter === 'active') return !task.completed;
+        if (currentFilter === 'completed') return task.completed;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filtered.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `flex items-center justify-between p-4 rounded-xl border transition ${
+          task.completed ? 'bg-slate-900/50 border-slate-800 opacity-60' : 'bg-slate-900 border-slate-700 hover:border-slate-600'
+        }`;
+
+        const priorityColors = {
+          high: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+          medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+          low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+        };
+
+        li.innerHTML = `
+          <div class="flex items-center gap-3 flex-1 min-w-0 pr-3">
+            <button onclick="toggleComplete('${task.id}')" class="w-5 h-5 rounded-md border flex items-center justify-center transition ${
+              task.completed ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-600 hover:border-indigo-500'
+            }">
+              ${task.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-100 font-medium truncate ${task.completed ? 'line-through text-slate-400' : ''}">
+                ${escapeHtml(task.text)}
+              </p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] px-2 py-0.5 rounded-full border ${priorityColors[task.priority]} capitalize">
+                  ${task.priority}
+                </span>
+                <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
+                  ${task.category}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button onclick="deleteTask('${task.id}')" class="text-slate-500 hover:text-rose-400 transition p-1">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+
+        taskList.appendChild(li);
+      });
+
+      updateStats();
+    }
+
+    function toggleComplete(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveAndRender();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveAndRender();
+    }
+
+    function filterTasks(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-slate-700', 'text-slate-300');
+      });
+      document.getElementById(`btn-${filter}`).classList.add('bg-indigo-600', 'text-white');
+      document.getElementById(`btn-${filter}`).classList.remove('bg-slate-700', 'text-slate-300');
+      renderTasks();
+    }
+
+    function saveAndRender() {
+      localStorage.setItem('ai_todo_tasks', JSON.stringify(tasks));
+      renderTasks();
+      updateAIInsights();
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').innerText = tasks.length;
+      document.getElementById('stat-completed').innerText = tasks.filter(t => t.completed).length;
+    }
+
+    function generateSubtasks() {
+      const goalInput = document.getElementById('ai-goal-input');
+      const goal = goalInput.value.trim();
+      if (!goal) return;
+
+      const smartTemplates = {
+        'web': ['Design layout wireframe', 'Setup repository & HTML/CSS', 'Implement JavaScript logic', 'Deploy to GitHub Pages'],
+        'app': ['Define feature requirements', 'Build core UI components', 'Integrate storage & state', 'Run QA tests'],
+        'study': ['Outline key topics', 'Create study notes', 'Complete practice tasks', 'Review results']
+      };
+
+      let subtasks = ['Define milestone 1 scope', 'Build core feature implementation', 'Review and finalize output'];
+      for (let key in smartTemplates) {
+        if (goal.toLowerCase().includes(key)) {
+          subtasks = smartTemplates[key];
+          break;
+        }
+      }
+
+      subtasks.forEach(sub => {
+        tasks.unshift({
+          id: Date.now().toString() + Math.random().toString().slice(2, 6),
+          text: `[${goal}] ${sub}`,
+          priority: 'medium',
+          category: 'Work',
+          completed: false,
+          createdAt: new Date().toISOString()
+        });
+      });
+
+      goalInput.value = '';
+      saveAndRender();
+    }
+
+    function updateAIInsights() {
+      const insightBox = document.getElementById('ai-insight-text');
+      if (tasks.length === 0) {
+        insightBox.innerText = "Task queue is clear! Add your primary targets for today.";
+        return;
+      }
+
+      const highPriority = tasks.filter(t => t.priority === 'high' && !t.completed).length;
+      const completedCount = tasks.filter(t => t.completed).length;
+      const completionRate = Math.round((completedCount / tasks.length) * 100);
+
+      if (highPriority > 2) {
+        insightBox.innerText = `Warning: You have ${highPriority} urgent tasks pending. Focus on completing them first.`;
+      } else if (completionRate > 50) {
+        insightBox.innerText = `Great progress! You've completed ${completionRate}% of your tasks today.`;
+      } else {
+        insightBox.innerText = `Workload is stable. You have ${tasks.filter(t => !t.completed).length} active items in queue.`;
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+  </script>
+</body>
+</html>
